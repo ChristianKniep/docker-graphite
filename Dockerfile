@@ -24,8 +24,6 @@ RUN sshd-keygen
 RUN sed -i -e 's/#UseDNS yes/UseDNS no/' /etc/ssh/sshd_config
 ADD root/ssh /root/.ssh/
 ADD etc/supervisord.d/sshd.ini /etc/supervisord.d/sshd.ini
-#ADD root/bin /root/bin
-#ADD etc/supervisord.d/setup.ini /etc/supervisord.d/setup.ini
 
 # Diamond
 RUN yum install -y python-configobj lm_sensors
@@ -40,13 +38,6 @@ ADD etc/supervisord.d/diamond.ini /etc/supervisord.d/diamond.ini
 # carboniface
 RUN yum install -y python-docopt /tmp/rpms/python-carboniface-1.0.3-1.x86_64.rpm
 
-# logstash-forwarder
-RUN 	yum install -y /tmp/rpms/logstash-forwarder-0.3.1-1.x86_64.rpm
-ADD 	./etc/logstash-forwarder.crt /etc/
-ADD 	./etc/logstash-forwarder.key /etc/
-ADD 	./etc/lumberjack.conf /etc/
-ADD 	./etc/supervisord.d/lumerjack.ini /etc/supervisord.d/lumerjack.ini.wait
-
 # whisper
 RUN 	yum install -y python-carbon git-core
 RUN     mkdir -p /var/lib/carbon/{whisper,lists}
@@ -55,6 +46,18 @@ ADD     ./etc/carbon/c0.conf /etc/carbon/
 ADD     ./etc/init.d/carbon-cache /etc/init.d/
 ADD     ./etc/carbon/storage-schemas.conf /etc/carbon/storage-schemas.conf
 ADD     ./etc/supervisord.d/carbon.ini /etc/supervisord.d/
+
+# rsyslog
+RUN yum install -y syslog-ng
+ADD etc/syslog-ng/syslog-ng.conf /etc/syslog-ng/syslog-ng.conf
+ADD etc/supervisord.d/syslog-ng.ini /etc/supervisord.d/
+
+### SETUP
+ADD root/bin /root/bin
+ADD etc/supervisord.d/setup.ini /etc/supervisord.d/setup.ini
+
+### Helper script
+ADD root/supervisor_daemonize.sh /root/supervisor_daemonize.sh
 
 # graphite-web
 RUN 	yum install -y nginx python-django python-django-tagging pyparsing pycairo python-gunicorn pytz
@@ -78,8 +81,6 @@ RUN 	rm -rf /tmp/rpms
 ####### Highly unsecure... !1!! ###########
 RUN echo "        StrictHostKeyChecking no" >> /etc/ssh/ssh_config
 RUN echo "        UserKnownHostsFile=/dev/null" >> /etc/ssh/ssh_config
-# Solution for 'ping: icmp open socket: Operation not permitted'
-RUN chmod u+s /usr/bin/ping
-RUN ln -sf /usr/share/zoneinfo/Europe/Paris /etc/localtime 
 
-CMD /bin/supervisord
+
+CMD /bin/supervisord -c /etc/supervisord.conf
