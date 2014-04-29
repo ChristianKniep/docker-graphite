@@ -27,13 +27,13 @@ RUN echo "        UserKnownHostsFile=/dev/null" >> /etc/ssh/ssh_config
 RUN echo "        AddressFamily inet" >> /etc/ssh/ssh_config
 
 # carboniface
+ADD rpms/python-carboniface-1.0.3-1.x86_64.rpm /tmp/rpms/
 RUN yum install -y python-docopt /tmp/rpms/python-carboniface-1.0.3-1.x86_64.rpm
 
 # whisper
 RUN 	yum install -y python-carbon git-core
 RUN     mkdir -p /var/lib/carbon/{whisper,lists}
 RUN 	chown carbon -R /var/lib/carbon/whisper/
-ADD     ./etc/init.d/carbon-cache /etc/init.d/
 ADD     ./etc/supervisord.d/carbon.ini /etc/supervisord.d/
 
 # graphite-web
